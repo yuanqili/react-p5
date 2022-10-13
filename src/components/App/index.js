@@ -1,50 +1,96 @@
-import React, { Component } from 'react'
+import React, { useState } from 'react'
+import Sketch from 'react-p5'
+import './index.css'
 
-import P5Wrapper from '../Processing'
-
-export default class App extends Component {
-  constructor() {
-    super()
-    this.state = {
-      slider: 100,
-      frameRate: null,
-    }
+class MyCircle {
+  constructor(x, y, radius) {
+    this.x = x
+    this.y = y
+    this.radius = radius
   }
 
-  onSetAppState = (newState, cb) => this.setState(newState, cb)
+  draw(p5) {
+    p5.circle(this.x, this.y, this.radius)
+  }
 
-  onSliderChange = (event) => this.setState({ slider: +event.target.value })
-
-  render() {
-    return (
-      <>
-        <P5Wrapper
-          p5Props={{ slider: this.state.slider }}
-          onSetAppState={this.onSetAppState}
-        />
-
-        <div style={{ textAlign: 'center' }}>
-          <strong>{this.state.slider}</strong>
-          <br />
-          <input
-            type='range'
-            min={5}
-            max={290}
-            step={1}
-            value={this.state.slider}
-            style={{ width: '90%', maxWidth: '900px' }}
-            onChange={this.onSliderChange}
-          />
-        </div>
-
-        <p style={{ textAlign: 'center' }}>
-          Sketch frame rate:&nbsp;
-          <big>
-            <strong>{this.state.frameRate}</strong>
-          </big>
-          &nbsp;fps
-        </p>
-      </>
-    )
+  update() {
+    this.x += 1
+    this.y += 1
   }
 }
+
+function App() {
+  const [radiusTarget, setRadiusTarget] = useState(100)
+  const [radius, setRadius] = useState(radiusTarget)
+
+  const Circles = [
+    new MyCircle(100, 100, radius),
+    new MyCircle(300, 300, radius),
+  ]
+
+  const updateNumber = (e) => {
+    const val = e.target.value
+    if (e.target.validity.valid) setRadiusTarget(val)
+  }
+
+  // Use parent to render the canvas in this ref, without that p5 will render
+  // the canvas outside your component.
+  const setup = (p5, canvasParentRef) => {
+    p5.createCanvas(500, 400).parent(canvasParentRef)
+  }
+
+  // Do not use setState in the draw function or in functions that are executed
+  // in the draw function. Please use normal variables or class properties for
+  // these purposes.
+  const draw = (p5) => {
+    p5.background(255, 130, 20)
+    Circles.forEach((circle) => circle.draw(p5))
+    Circles.forEach((circle) => circle.update())
+  }
+
+  return (
+    <div className='h-full w-full pt-10 flex flex-col items-center space-y-2'>
+      <p className='font-bold text-2xl'>Welcome to react-p5js</p>
+      <div className='text-center'>
+        <p>Yuren Hao</p>
+        <p>Nanjing Foreign Language School</p>
+        <p>Nanjing, 210000</p>
+      </div>
+      <Sketch setup={setup} draw={draw} />
+      <div className='inline-flex rounded-md shadow-sm' role='group'>
+        <button
+          type='button'
+          className='btn-left'
+          onClick={() => setRadius(radius - 10)}
+        >
+          Smaller
+        </button>
+        <button
+          type='button'
+          className='btn-middle'
+          onClick={() => setRadius(radiusTarget)}
+        >
+          Set to
+        </button>
+        <input
+          type='text'
+          id='size'
+          className='btn-middle'
+          placeholder='100'
+          value={radiusTarget}
+          onChange={updateNumber}
+          pattern='^-?[0-9]\d*\.?\d*$'
+        />
+        <button
+          type='button'
+          className='btn-right'
+          onClick={() => setRadius(radius + 10)}
+        >
+          Larger
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default App
