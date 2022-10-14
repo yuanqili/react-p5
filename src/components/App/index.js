@@ -1,32 +1,15 @@
 import React, { useState } from 'react'
 import Sketch from 'react-p5'
+import { CLOSE_DISTANCE_THRESHOLD, HEIGHT, WIDTH } from './config'
 import './index.css'
-
-class MyCircle {
-  constructor(x, y, radius) {
-    this.x = x
-    this.y = y
-    this.radius = radius
-  }
-
-  draw(p5) {
-    p5.circle(this.x, this.y, this.radius)
-  }
-
-  update() {
-    this.x += 1
-    this.y += 1
-  }
-}
+import { MyCircle } from './MyCircle'
+import { getRandomInt } from './utils'
 
 function App() {
-  const [radiusTarget, setRadiusTarget] = useState(100)
+  const [radiusTarget, setRadiusTarget] = useState(10)
   const [radius, setRadius] = useState(radiusTarget)
 
-  const Circles = [
-    new MyCircle(100, 100, radius),
-    new MyCircle(300, 300, radius),
-  ]
+  const circles = [...Array(1000).keys()].map((_) => new MyCircle(radius))
 
   const updateNumber = (e) => {
     const val = e.target.value
@@ -36,7 +19,7 @@ function App() {
   // Use parent to render the canvas in this ref, without that p5 will render
   // the canvas outside your component.
   const setup = (p5, canvasParentRef) => {
-    p5.createCanvas(500, 400).parent(canvasParentRef)
+    p5.createCanvas(WIDTH, HEIGHT).parent(canvasParentRef)
   }
 
   // Do not use setState in the draw function or in functions that are executed
@@ -44,13 +27,26 @@ function App() {
   // these purposes.
   const draw = (p5) => {
     p5.background(255, 130, 20)
-    Circles.forEach((circle) => circle.draw(p5))
-    Circles.forEach((circle) => circle.update())
+    circles.forEach((circle) => circle.draw(p5))
+    circles.forEach((circle) => circle.update())
+    for (let i = 0; i < circles.length; i++) {
+      for (let j = 0; j < circles.length; j++) {
+        if (i === j) continue
+        const disX = circles[i].x - circles[j].x
+        const disY = circles[i].y - circles[j].y
+        const distance = Math.sqrt(disX * disX + disY * disY)
+        if (distance > CLOSE_DISTANCE_THRESHOLD) continue
+        if (circles[i].status === 'SICK' && getRandomInt(100) <= 1)
+          circles[j].status = 'SICK'
+      }
+    }
   }
 
   return (
     <div className='h-full w-full pt-10 flex flex-col items-center space-y-2'>
-      <p className='font-bold text-2xl'>Welcome to react-p5js</p>
+      <p className='font-bold text-2xl text-white px-2 rounded-md shadow-xl bg-gradient-to-r from-amber-300 to-blue-500'>
+        Welcome to react-p5js
+      </p>
       <div className='text-center'>
         <p>Yuren Hao</p>
         <p>Nanjing Foreign Language School</p>
